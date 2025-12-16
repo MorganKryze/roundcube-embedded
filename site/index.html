@@ -1,16 +1,111 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Embedded Example Site</title>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CloudSecure Webmail</title>
     <style>
-        body { margin: 0; height: 100vh; display: flex; flex-direction: column; }
-        header { background: #222; color: #fff; padding: 1rem; text-align: center; }
-        iframe { flex: 1; border: none; width: 100%; }
+      body {
+        margin: 0;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+      .cs-header {
+        background: #23272e;
+        color: #e0e0e0;
+        padding: 0.5rem 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-family: 'Segoe UI', Arial, sans-serif;
+        font-size: 0.98rem;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+        letter-spacing: 0.01em;
+      }
+      .cs-header .cs-time {
+        font-weight: 400;
+        opacity: 0.85;
+      }
+      .cs-header .cs-timer {
+        font-weight: 500;
+        color: #ffb300;
+        background: rgba(255, 255, 255, 0.06);
+        border-radius: 6px;
+        padding: 0.2em 1.2em;
+        margin: 0 1.5em;
+        font-size: 1.08em;
+        letter-spacing: 0.04em;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+        transition: color 0.3s;
+      }
+      .cs-header .cs-title {
+        font-weight: 500;
+        opacity: 0.92;
+      }
+      iframe {
+        flex: 1;
+        border: none;
+        width: 100%;
+      }
     </style>
-</head>
-<body>
-   <iframe src="http://localhost:9000/" title="Roundcube Mail"></iframe>
-</body>
+  </head>
+  <body>
+    <div class="cs-header">
+      <span class="cs-time" id="cs-time"></span>
+      <span class="cs-timer" id="cs-timer"></span>
+      <span class="cs-title">CloudSecure Webmail</span>
+    </div>
+    <iframe src="http://localhost:9000/" title="Roundcube Mail"></iframe>
+    <script src="https://cdn.jsdelivr.net/npm/luxon@3.4.4/build/global/luxon.min.js"></script>
+    <script>
+      // Set the start time here (Europe/Paris timezone)
+      const startTimeParis = luxon.DateTime.fromISO('2025-12-16T9:00:00', {
+        zone: 'Europe/Paris'
+      });
+      const durationMinutes = 60;
+      const endTimeParis = startTimeParis.plus({ minutes: durationMinutes });
+
+      function updateTime() {
+        const now = luxon.DateTime.now().setZone('Europe/Paris');
+        const options = {
+          weekday: 'short',
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit'
+        };
+        document.getElementById('cs-time').textContent =
+          now.toLocaleString(options);
+
+        // Timer logic
+        const timerElem = document.getElementById('cs-timer');
+        let timerStr;
+        if (now < startTimeParis) {
+          timerStr = '60:00:00';
+          timerElem.style.visibility = 'hidden';
+        } else if (now >= startTimeParis && now < endTimeParis) {
+          let diff = endTimeParis
+            .diff(now, ['hours', 'minutes', 'seconds'])
+            .toObject();
+          timerStr = `${String(diff.hours || 0).padStart(2, '0')}:${String(
+            diff.minutes || 0
+          ).padStart(2, '0')}:${String(
+            Math.floor(diff.seconds || 0)
+          ).padStart(2, '0')}`;
+          timerElem.style.visibility = 'visible';
+          timerElem.style.color = 'red';
+        } else {
+          timerStr = 'Session finished.';
+          timerElem.style.visibility = 'visible';
+          timerElem.style.color = 'red';
+        }
+        timerElem.textContent = timerStr;
+      }
+      updateTime();
+      setInterval(updateTime, 1000);
+    </script>
+  </body>
 </html>
