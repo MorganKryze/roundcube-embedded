@@ -29,13 +29,14 @@ def proxy(path):
     method = request.method
     data = request.get_data() if method in ["POST", "PUT", "PATCH"] else None
 
+    # Follow redirects server-side
     resp = requests.request(
         method,
         url,
         headers=headers,
         data=data,
         cookies=request.cookies,
-        allow_redirects=False,
+        allow_redirects=True,  # Changed to True
         stream=True,
         verify=True,
     )
@@ -62,9 +63,11 @@ def proxy(path):
     response_headers.append(("X-Frame-Options", "ALLOWALL"))
     response_headers.append(("Content-Security-Policy", "frame-ancestors *"))
 
-    # Fix cookies
+    # Fix cookies - preserve session cookies
     for cookie in resp.cookies:
         cookie_str = f"{cookie.name}={cookie.value}; Path=/"
+        if cookie.name.lower() in ["sessid", "roundcube_sessid", "session"]:
+            cookie_str += "; HttpOnly"
         response_headers.append(("Set-Cookie", cookie_str))
 
     # Check if response is HTML and remove frame-busting
@@ -90,6 +93,22 @@ def proxy(path):
         content = re.sub(
             rb"if\s*\(\s*(?:window\s*\.?\s*top|top)\s*!==?\s*(?:window\s*\.?\s*self|self)\s*\)[^}]*\{[^}]*\}",
             b"",
+            content,
+            flags=re.IGNORECASE,
+        )
+
+        # Remove top.location redirects
+        content = re.sub(
+            rb'(?:top|parent)\.location\s*=\s*["\'][^"\']*["\']',
+            b"window.location = window.location",
+            content,
+            flags=re.IGNORECASE,
+        )
+
+        # Remove window.top checks
+        content = re.sub(
+            rb"if\s*\(\s*window\s*!=\s*top\s*\)",
+            b"if (false)",
             content,
             flags=re.IGNORECASE,
         )
