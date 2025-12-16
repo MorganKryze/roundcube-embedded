@@ -1,0 +1,33 @@
+services:
+  cloudsecure-webmail:
+    image: ghcr.io/morgankryze/cloudsecure-webmail:latest
+    container_name: cloudsecure-webmail
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    expose:
+      - 80
+    networks:
+      - cloudsecure
+      - pangolin
+    labels:
+      com.centurylinklabs.watchtower.enable: true
+
+  cloudsecure-backend:
+    image: ghcr.io/morgankryze/cloudsecure-backend:latest
+    container_name: cloudsecure-backend
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    expose:
+      - 9000
+    networks:
+      - cloudsecure
+    labels:
+      com.centurylinklabs.watchtower.enable: true
+
+networks:
+  pangolin:
+    external: true
+  cloudsecure:
+    driver: bridge

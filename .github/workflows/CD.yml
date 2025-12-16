@@ -1,4 +1,4 @@
-name: Build and Push Docker Image
+name: Build and Push Docker Images
 
 on:
   push:
@@ -10,7 +10,7 @@ permissions:
   packages: write
 
 jobs:
-  build-and-push-image:
+  build-and-push-images:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -22,11 +22,24 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push Docker image
+      - name: Build and push API Docker image
         uses: docker/build-push-action@v4
         with:
           context: .
-          file: docker/Dockerfile
+          file: docker/Dockerfile.api
+          push: true
+          tags: |
+            ghcr.io/morgankryze/cloudsecure-backend:latest
+            ghcr.io/morgankryze/cloudsecure-backend:${{ github.sha }}
+          build-args: |
+            VERSION=${{ github.ref_name }}
+            BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
+
+      - name: Build and push Web (nginx) Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: docker/Dockerfile.web
           push: true
           tags: |
             ghcr.io/morgankryze/cloudsecure-webmail:latest
