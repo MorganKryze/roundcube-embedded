@@ -1,9 +1,8 @@
-FROM caddy:2.8-alpine
+FROM python:3.11-slim
 
-# Copy static site
-COPY site/ /usr/share/caddy/
-
-# Use a simple Caddyfile for static serving
-COPY docker/Caddyfile /etc/caddy/Caddyfile
+WORKDIR /site
+COPY site/ /site/
 
 EXPOSE 80
+
+CMD ["python", "-m", "http.server", "80"]
