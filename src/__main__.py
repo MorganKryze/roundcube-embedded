@@ -1,6 +1,7 @@
 import requests
 from flask import Flask, Response, request
 import re
+from urllib.parse import urlparse, urljoin
 
 app = Flask(__name__)
 TARGET_URL = "https://mail.ovh.net/roundcube/"
@@ -29,14 +30,17 @@ def proxy(path):
     method = request.method
     data = request.get_data() if method in ["POST", "PUT", "PATCH"] else None
 
-    # Follow redirects server-side
+    # Build cookies string from browser cookies
+    cookie_header = "; ".join([f"{k}={v}" for k, v in request.cookies.items()])
+    if cookie_header:
+        headers["Cookie"] = cookie_header
+
     resp = requests.request(
         method,
         url,
         headers=headers,
         data=data,
-        cookies=request.cookies,
-        allow_redirects=True,  # Changed to True
+        allow_redirects=False,  # Back to False
         stream=True,
         verify=True,
     )
@@ -51,6 +55,7 @@ def proxy(path):
         "content-security-policy-report-only",
         "frame-options",
         "strict-transport-security",
+        "location",  # We'll handle this separately
     ]
 
     response_headers = [
@@ -59,16 +64,37 @@ def proxy(path):
         if name.lower() not in excluded_headers
     ]
 
+    # Handle redirects - rewrite Location header
+    if resp.status_code in [301, 302, 303, 307, 308]:
+        location = resp.headers.get("Location", "")
+        if location:
+            # Convert absolute URLs to relative proxy URLs
+            if location.startswith("http"):
+                parsed = urlparse(location)
+                new_location = parsed.path
+                if parsed.query:
+                    new_location += "?" + parsed.query
+                response_headers.append(("Location", new_location))
+            else:
+                response_headers.append(("Location", location))
+
     # Add permissive headers
     response_headers.append(("X-Frame-Options", "ALLOWALL"))
     response_headers.append(("Content-Security-Policy", "frame-ancestors *"))
 
-    # Fix cookies - preserve session cookies
-    for cookie in resp.cookies:
-        cookie_str = f"{cookie.name}={cookie.value}; Path=/"
-        if cookie.name.lower() in ["sessid", "roundcube_sessid", "session"]:
-            cookie_str += "; HttpOnly"
-        response_headers.append(("Set-Cookie", cookie_str))
+    # Pass through Set-Cookie headers exactly as received
+    for header_name, header_value in resp.raw.headers.items():
+        if header_name.lower() == "set-cookie":
+            # Remove Secure and SameSite=None to work in iframe
+            cookie_value = header_value
+            cookie_value = re.sub(r";\s*Secure", "", cookie_value, flags=re.IGNORECASE)
+            cookie_value = re.sub(
+                r";\s*SameSite=\w+", "", cookie_value, flags=re.IGNORECASE
+            )
+            cookie_value = re.sub(
+                r";\s*Domain=[^;]+", "", cookie_value, flags=re.IGNORECASE
+            )
+            response_headers.append(("Set-Cookie", cookie_value))
 
     # Check if response is HTML and remove frame-busting
     content_type = resp.headers.get("Content-Type", "")
@@ -99,8 +125,8 @@ def proxy(path):
 
         # Remove top.location redirects
         content = re.sub(
-            rb'(?:top|parent)\.location\s*=\s*["\'][^"\']*["\']',
-            b"window.location = window.location",
+            rb"(?:top|parent)\.location\s*=",
+            b"window.location =",
             content,
             flags=re.IGNORECASE,
         )
