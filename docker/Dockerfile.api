@@ -23,5 +23,9 @@ USER appuser
 # Expose port
 EXPOSE 9000
 
+# Healthcheck: check if the API is responding
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+    CMD curl --fail http://localhost:9000/ || exit 1
+
 # Run the app
 CMD ["python", "-m", "src"]
