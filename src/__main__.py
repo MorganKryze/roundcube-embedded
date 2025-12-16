@@ -1,6 +1,5 @@
 import requests
 from flask import Flask, Response, request
-from urllib.parse import urljoin
 
 app = Flask(__name__)
 TARGET_URL = "https://mail.ovh.net/roundcube/"
