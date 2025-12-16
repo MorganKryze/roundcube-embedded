@@ -1,5 +1,6 @@
 import requests
 from flask import Flask, Response, request
+import re
 
 app = Flask(__name__)
 TARGET_URL = "https://mail.ovh.net/roundcube/"
@@ -18,7 +19,6 @@ def proxy(path):
     if request.query_string:
         url += "?" + request.query_string.decode()
 
-    # Forward headers but modify Host
     headers = {
         key: value
         for key, value in request.headers
@@ -40,7 +40,6 @@ def proxy(path):
         verify=True,
     )
 
-    # Remove problematic headers
     excluded_headers = [
         "content-encoding",
         "content-length",
@@ -48,6 +47,7 @@ def proxy(path):
         "connection",
         "x-frame-options",
         "content-security-policy",
+        "content-security-policy-report-only",
         "frame-options",
         "strict-transport-security",
     ]
@@ -58,17 +58,50 @@ def proxy(path):
         if name.lower() not in excluded_headers
     ]
 
-    # Fix cookies - remove Domain, Secure, SameSite=None
+    # Add permissive headers
+    response_headers.append(("X-Frame-Options", "ALLOWALL"))
+    response_headers.append(("Content-Security-Policy", "frame-ancestors *"))
+
+    # Fix cookies
     for cookie in resp.cookies:
         cookie_str = f"{cookie.name}={cookie.value}; Path=/"
         response_headers.append(("Set-Cookie", cookie_str))
 
-    # Stream response
-    def generate():
-        for chunk in resp.iter_content(chunk_size=8192):
-            yield chunk
+    # Check if response is HTML and remove frame-busting
+    content_type = resp.headers.get("Content-Type", "")
+    if "text/html" in content_type:
+        content = b"".join(resp.iter_content(chunk_size=8192))
 
-    return Response(generate(), resp.status_code, response_headers)
+        # Remove frame-busting meta tags
+        content = re.sub(
+            rb'<meta[^>]*http-equiv=["\']?X-Frame-Options["\']?[^>]*>',
+            b"",
+            content,
+            flags=re.IGNORECASE,
+        )
+        content = re.sub(
+            rb'<meta[^>]*http-equiv=["\']?Content-Security-Policy["\']?[^>]*>',
+            b"",
+            content,
+            flags=re.IGNORECASE,
+        )
+
+        # Remove common frame-busting JavaScript patterns
+        content = re.sub(
+            rb"if\s*\(\s*(?:window\s*\.?\s*top|top)\s*!==?\s*(?:window\s*\.?\s*self|self)\s*\)[^}]*\{[^}]*\}",
+            b"",
+            content,
+            flags=re.IGNORECASE,
+        )
+
+        return Response(content, resp.status_code, response_headers)
+    else:
+
+        def generate():
+            for chunk in resp.iter_content(chunk_size=8192):
+                yield chunk
+
+        return Response(generate(), resp.status_code, response_headers)
 
 
 if __name__ == "__main__":
