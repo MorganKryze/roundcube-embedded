@@ -1,17 +1,9 @@
-FROM nginx:1.25-alpine as prod
+FROM caddy:2.8-alpine
 
-# Remove default nginx page
-RUN rm -rf /usr/share/nginx/html/*
+# Copy static site
+COPY site/ /usr/share/caddy/
 
-# Copy your static site
-COPY site/ /usr/share/nginx/html/
-
-
-# Harden nginx config: disable server tokens, limit methods, add security headers
-COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
+# Use a simple Caddyfile for static serving
+COPY docker/Caddyfile /etc/caddy/Caddyfile
 
 EXPOSE 80
-# Healthcheck: check if the main page is served
-HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-    CMD wget --spider -q http://localhost/ || exit 1
-CMD ["nginx", "-g", "daemon off;"]
