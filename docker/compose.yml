@@ -13,8 +13,7 @@ services:
     labels:
       com.centurylinklabs.watchtower.enable: true
     depends_on:
-      cloudsecure-backend:
-        condition: service_healthy
+      - cloudsecure-backend
 
   cloudsecure-backend:
     image: ghcr.io/morgankryze/cloudsecure-backend:latest
