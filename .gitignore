@@ -1,0 +1,3 @@
+# Python
+src/__pycache__/*
+src/Roundcube_embedded.egg-info/*

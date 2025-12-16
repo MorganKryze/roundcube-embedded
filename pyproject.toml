@@ -1,0 +1,17 @@
+[project]
+name = "Roundcube-embedded"
+version = "0.0.0"
+description = "A simple iframe embedding Roundcube webmail client for academic purposes only."
+readme = "README.md"
+license = "GPL-3.0-only"
+license-files = ["LICEN[CS]E*"]
+authors = [
+    { name = "Yann M. Vidamment", email = "contact@libresoftware.cloud" },
+]
+requires-python = ">=3.11"
+dependencies = ["flask>=3.1.1", "requests>=2.31.0"]
+
+[project.urls]
+Homepage = "https://github.com/MorganKryze/roundcube-embedded"
+Repository = "https://github.com/MorganKryze/roundcube-embedded.git"
+Issues = "https://github.com/MorganKryze/roundcube-embedded/issues"
