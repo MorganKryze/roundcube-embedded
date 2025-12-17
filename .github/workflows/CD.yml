@@ -60,3 +60,16 @@ jobs:
           build-args: |
             VERSION=${{ github.ref_name }}
             BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
+
+      - name: Build and push Webtimeout Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: docker/Dockerfile.webtimeout
+          push: true
+          tags: |
+            ghcr.io/morgankryze/cloudsecure-webtimeout:latest
+            ghcr.io/morgankryze/cloudsecure-webtimeout:${{ github.sha }}
+          build-args: |
+            VERSION=${{ github.ref_name }}
+            BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')

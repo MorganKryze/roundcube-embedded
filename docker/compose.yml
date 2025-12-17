@@ -40,6 +40,19 @@ services:
     labels:
       com.centurylinklabs.watchtower.enable: true
 
+  cloudsecure-webtimeout:
+    image: ghcr.io/morgankryze/cloudsecure-webtimeout:latest
+    container_name: cloudsecure-webtimeout
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    expose:
+      - 80
+    networks:
+      - pangolin
+    labels:
+      com.centurylinklabs.watchtower.enable: true
+
 networks:
   pangolin:
     external: true
