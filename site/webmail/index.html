@@ -56,22 +56,17 @@
       <span class="cs-timer" id="cs-timer"></span>
       <span class="cs-title">CloudSecure Webmail</span>
     </div>
-    <iframe
-      src="https://webmail-backend.libresoftware.cloud"
-      title="Roundcube Mail"
-    ></iframe>
+    <iframe src="https://webmail-backend.libresoftware.cloud" title="Roundcube Mail"></iframe>
     <script src="https://cdn.jsdelivr.net/npm/luxon@3.4.4/build/global/luxon.min.js"></script>
     <script>
       // Set the start time here (Europe/Paris timezone)
-      const startTimeParis = luxon.DateTime.fromISO('2025-12-17T14:45:00', {
+      const startTimeParis = luxon.DateTime.fromISO('2025-12-17T14:15:00', {
         zone: 'Europe/Paris'
       });
       const orangeDurationMinutes = 30;
+      const orangeEndTimeParis = startTimeParis.plus({ minutes: orangeDurationMinutes }); // 14:45
       const redDurationMinutes = 60;
-      const orangeEndTimeParis = startTimeParis.plus({
-        minutes: orangeDurationMinutes
-      });
-      const endTimeParis = startTimeParis.plus({ minutes: redDurationMinutes });
+      const endTimeParis = orangeEndTimeParis.plus({ minutes: redDurationMinutes }); // 15:45
 
       function updateTime() {
         const now = luxon.DateTime.now().setZone('Europe/Paris');
@@ -100,10 +95,9 @@
             .toObject();
           timerStr = `${String(diff.hours || 0).padStart(2, '0')}:${String(
             diff.minutes || 0
-          ).padStart(2, '0')}:${String(Math.floor(diff.seconds || 0)).padStart(
-            2,
-            '0'
-          )}`;
+          ).padStart(2, '0')}:${String(
+            Math.floor(diff.seconds || 0)
+          ).padStart(2, '0')}`;
           timerElem.style.visibility = 'visible';
           timerElem.style.color = '#ffb300';
         } else if (now >= orangeEndTimeParis && now < endTimeParis) {
@@ -113,10 +107,9 @@
             .toObject();
           timerStr = `${String(diff.hours || 0).padStart(2, '0')}:${String(
             diff.minutes || 0
-          ).padStart(2, '0')}:${String(Math.floor(diff.seconds || 0)).padStart(
-            2,
-            '0'
-          )}`;
+          ).padStart(2, '0')}:${String(
+            Math.floor(diff.seconds || 0)
+          ).padStart(2, '0')}`;
           timerElem.style.visibility = 'visible';
           timerElem.style.color = 'red';
         } else {
