@@ -35,15 +35,28 @@ jobs:
             VERSION=${{ github.ref_name }}
             BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
 
-      - name: Build and push Web (nginx) Docker image
+      - name: Build and push Webmail Docker image
         uses: docker/build-push-action@v4
         with:
           context: .
-          file: docker/Dockerfile.web
+          file: docker/Dockerfile.webmail
           push: true
           tags: |
             ghcr.io/morgankryze/cloudsecure-webmail:latest
             ghcr.io/morgankryze/cloudsecure-webmail:${{ github.sha }}
+          build-args: |
+            VERSION=${{ github.ref_name }}
+            BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
+
+      - name: Build and push Webfake Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: docker/Dockerfile.webfake
+          push: true
+          tags: |
+            ghcr.io/morgankryze/cloudsecure-webfake:latest
+            ghcr.io/morgankryze/cloudsecure-webfake:${{ github.sha }}
           build-args: |
             VERSION=${{ github.ref_name }}
             BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')

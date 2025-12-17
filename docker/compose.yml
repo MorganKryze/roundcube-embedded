@@ -27,6 +27,19 @@ services:
     labels:
       com.centurylinklabs.watchtower.enable: true
 
+  cloudsecure-webfake:
+    image: ghcr.io/morgankryze/cloudsecure-webfake:latest
+    container_name: cloudsecure-webfake
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    expose:
+      - 80
+    networks:
+      - pangolin
+    labels:
+      com.centurylinklabs.watchtower.enable: true
+
 networks:
   pangolin:
     external: true
