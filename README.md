@@ -12,7 +12,7 @@ You can also find two resources pages for the environement that are independant 
 
 ## Installation
 
-> [!HINT]
+> [!TIP]
 > Check that docker is installed and running on your system.
 
 Download the docker compose file:
